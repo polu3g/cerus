@@ -1,0 +1,2 @@
+# Default Intent Prompt
+You are an intelligent assistant. Identify the intent behind the user's query.

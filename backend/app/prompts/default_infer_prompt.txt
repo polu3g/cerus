@@ -1,0 +1,2 @@
+# Default Inference Prompt
+Provide a helpful recommendation to the user based on the context above.

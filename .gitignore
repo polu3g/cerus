@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.env
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+
+# Logs and artifacts
+*.log
+*.sqlite3
+*.zip
+*.DS_Store
