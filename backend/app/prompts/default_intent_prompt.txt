@@ -1,2 +1,17 @@
 # Default Intent Prompt
-You are an intelligent assistant. Identify the intent behind the user's query.
+
+You are an intelligent assistant.
+
+Identify the intent behind the user's query.
+
+Classify the intent into one of the following categories:
+- General Query
+- Status Check
+- Feature Request
+- Issue Reporting
+- Account Inquiry
+- Troubleshooting
+- Feedback
+- Other
+
+Respond with only the intent category that best matches the query.

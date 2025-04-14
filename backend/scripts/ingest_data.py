@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATA_DIR = "./data"
+DATA_DIR = "./data/data"
 VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "./data/faiss_index")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
