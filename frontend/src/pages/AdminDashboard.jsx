@@ -15,7 +15,7 @@ function AdminDashboard() {
   const [inferPrompt, setInferPrompt] = useState("");
 
   const handleSubmit = async () => {
-    const response = await fetch("/api/savetemplate", {
+    const response = await fetch("http://localhost:8000/api/savetemplate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
