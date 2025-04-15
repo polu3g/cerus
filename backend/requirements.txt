@@ -12,3 +12,6 @@ langchain_google_genai
 requests
 pytesseract
 pillow
+langchain
+langgraph
+langchain-core
