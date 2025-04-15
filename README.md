@@ -154,3 +154,12 @@ npm run dev
 ```bash
 docker-compose up --build
 ```
+## Ingestion Script
+```bash
+python scripts/ingest.py
+```
+This script will: 
+Load and clean all documents
+Perform OCR for image files
+Generate embeddings
+Save the FAISS index for similarity search during inference
