@@ -47,6 +47,10 @@ Provide a concise answer to the user's question based strictly on the context pr
 ---
 
 ## 🔄 Flow Overview
+
+![image](https://github.com/user-attachments/assets/9a78577a-8c3e-4251-a385-2397bad2a5bb)
+
+
 ```plantuml
 @startuml
 actor User
