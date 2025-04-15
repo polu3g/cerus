@@ -1,5 +1,8 @@
 # Cerus: AI-Powered Contextual Inference Engine
 
+![image](https://github.com/user-attachments/assets/5364e914-5696-499d-a714-1f60c56016f2)
+
+
 ## 🚀 Objective
 Cerus is an intelligent RAG-based (Retrieval Augmented Generation) API engine designed to:
 - Accurately extract **user intent** from natural language queries
