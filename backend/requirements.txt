@@ -10,3 +10,5 @@ faiss-cpu
 pypdf
 langchain_google_genai
 requests
+pytesseract
+pillow

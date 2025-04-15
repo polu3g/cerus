@@ -1,9 +1,13 @@
 
 import os
+import re
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from dotenv import load_dotenv
+from PIL import Image
+import pytesseract
+from langchain_core.documents import Document
 
 load_dotenv()
 
@@ -19,11 +23,20 @@ def load_documents():
         path = os.path.join(DATA_DIR, fname)
         if fname.endswith(".txt"):
             loader = TextLoader(path)
+            docs.extend(loader.load())
         elif fname.endswith(".pdf"):
             loader = PyPDFLoader(path)
-        else:
-            continue
-        docs.extend(loader.load())
+            docs.extend(loader.load())
+        elif fname.endswith(".png"):
+            try:
+                text = pytesseract.image_to_string(Image.open(path))
+                text = text.replace('\n', ' ').strip()  # Remove newlines and trim whitespace
+                text = re.sub(r'\s+', ' ', text).strip() 
+                if text:
+                    docs.append(Document(page_content=text, metadata={"source": fname}))
+            except Exception as e:
+                print(f"Error processing image {fname}: {e}")
+       
     return docs
 
 def main():
