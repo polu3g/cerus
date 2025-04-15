@@ -1,5 +1,8 @@
 # Cerus: AI-Powered Contextual Inference Engine
 
+<img src="https://github.com/user-attachments/assets/5364e914-5696-499d-a714-1f60c56016f2" height="400" width="1500" alt="Cerus Branding" />
+
+
 ## 🚀 Objective
 Cerus is an intelligent RAG-based (Retrieval Augmented Generation) API engine designed to:
 - Accurately extract **user intent** from natural language queries
@@ -47,6 +50,10 @@ Provide a concise answer to the user's question based strictly on the context pr
 ---
 
 ## 🔄 Flow Overview
+
+![image](https://github.com/user-attachments/assets/9a78577a-8c3e-4251-a385-2397bad2a5bb)
+
+
 ```plantuml
 @startuml
 actor User
@@ -147,3 +154,12 @@ npm run dev
 ```bash
 docker-compose up --build
 ```
+## Ingestion Script
+```bash
+python scripts/ingest.py
+```
+This script will: 
+Load and clean all documents
+Perform OCR for image files
+Generate embeddings
+Save the FAISS index for similarity search during inference
