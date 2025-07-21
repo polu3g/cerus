@@ -7,9 +7,40 @@ from app.vectorstore.faiss_store import similarity_search
 from app.core.config import settings
 from langgraph.graph import StateGraph
 from langchain_core.runnables import RunnableLambda
+from trulens_eval import Tru
+from trulens_eval import Feedback, tru_chain
+from trulens_eval.feedback import GroundTruthAgreement
+from trulens.providers.openai import OpenAI as fOpenAI
+from trulens.apps.app import instrument
+from trulens.core import TruSession
+
+session = TruSession()
+session.reset_database()
 
 GEMINI_ENDPOINT = settings.GEMINI_ENDPOINT
+print(os.getenv("OPENAI_API_KEY"))
+golden_set = [
+    {
+        "query": "who invented the lightbulb?",
+        "expected_response": "Thomas Edison",
+    },
+    {
+        "query": "¿quien invento la bombilla?",
+        "expected_response": "Thomas Edison",
+    },
+]
 
+tru = Tru()
+
+# Optional: Set up TruLens to run a dashboard
+tru.run_dashboard()  # Opens dashboard at http://localhost:8501
+
+feedback = Feedback(
+    GroundTruthAgreement(golden_set, provider=fOpenAI()).agreement_measure,
+    name="Ground Truth Semantic Agreement",
+).on_input_output()
+
+@instrument
 def call_gemini(prompt: str) -> str:
     """Call Gemini 2.0 API with a prompt and return the generated text"""
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -21,6 +52,7 @@ def call_gemini(prompt: str) -> str:
             raise ValueError(f"Unexpected response format: {e}")
     else:
         raise RuntimeError(f"Gemini API error {response.status_code}: {response.text}")
+
 
 def clean_response(text: str) -> str:
     text = text.replace('\n', ' ')
