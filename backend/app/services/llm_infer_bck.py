@@ -1,6 +1,5 @@
 import os
 import re
-import yaml
 import requests
 from typing import Dict
 from app.services.prompt_loader import load_prompt
@@ -15,19 +14,25 @@ from trulens.providers.openai import OpenAI as fOpenAI
 from trulens.apps.app import instrument
 from trulens.core import TruSession
 
-# ------------------ Setup ------------------
 session = TruSession()
 session.reset_database()
 
 GEMINI_ENDPOINT = settings.GEMINI_ENDPOINT
 print(os.getenv("OPENAI_API_KEY"))
-
 golden_set = [
-    {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
-    {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"},
+    {
+        "query": "who invented the lightbulb?",
+        "expected_response": "Thomas Edison",
+    },
+    {
+        "query": "¿quien invento la bombilla?",
+        "expected_response": "Thomas Edison",
+    },
 ]
 
 tru = Tru()
+
+# Optional: Set up TruLens to run a dashboard
 tru.run_dashboard()  # Opens dashboard at http://localhost:8501
 
 feedback = Feedback(
@@ -35,10 +40,9 @@ feedback = Feedback(
     name="Ground Truth Semantic Agreement",
 ).on_input_output()
 
-
-# ------------------ Gemini Caller ------------------
 @instrument
 def call_gemini(prompt: str) -> str:
+    """Call Gemini 2.0 API with a prompt and return the generated text"""
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     response = requests.post(GEMINI_ENDPOINT, json=payload, headers={"Content-Type": "application/json"})
     if response.status_code == 200:
@@ -56,8 +60,7 @@ def clean_response(text: str) -> str:
     text = re.sub(r'\s{2,}', ' ', text).strip()
     return text
 
-
-# ------------------ Step Functions ------------------
+# Step nodes
 def load_prompts(state: Dict) -> Dict:
     client_id = state["client_id"]
     return {
@@ -72,12 +75,6 @@ def extract_intent(state: Dict) -> Dict:
     prompt = f"{intent_prompt}\n\nQuery:\n{query}"
     intent = call_gemini(prompt).strip()
     return {**state, "extracted_intent": intent}
-
-def kg_search_agent(state: Dict) -> Dict:
-    intent = state["extracted_intent"]
-    # Placeholder for KG response; replace with actual KG lookup logic
-    kg_context = f"Knowledge graph results for intent: {intent}"
-    return {**state, "kg_context": kg_context}
 
 def search_similar_docs(state: Dict) -> Dict:
     docs = similarity_search(state["extracted_intent"], k=10)
@@ -97,49 +94,37 @@ def finalize(state: Dict) -> Dict:
         "client_id": state["client_id"],
         "query": state["query"],
         "extracted_intent": state["extracted_intent"],
-        "kg_context": state.get("kg_context", ""),
         "response": clean_response(state["raw_response"]),
-        "model_type": "RAG+KG",
+        "model_type": "RAG",
         "model_ver": "Cerus v1.0"
     }
 
+# Define the state schema or input/output
+state_schema = frozenset({
+    "client_id": {"type": "string"},
+    "query": {"type": "string"},
+    "extracted_intent": {"type": "string"},
+    "context": {"type": "string"},
+    "raw_response": {"type": "string"}
+})
 
-# ------------------ Workflow Loader ------------------
-STEP_FUNCTIONS = {
-    "load_prompts": load_prompts,
-    "extract_intent": extract_intent,
-    "kg_search_agent": kg_search_agent,
-    "search_similar_docs": search_similar_docs,
-    "run_inference": run_inference,
-    "finalize": finalize
-}
+# Build the StateGraph
+graph = StateGraph(state_schema=state_schema)
 
-def load_workflow_from_yaml(yaml_path: str):
-    with open(yaml_path, "r") as f:
-        config = yaml.safe_load(f)
+graph.add_node("load_prompts", RunnableLambda(load_prompts))
+graph.add_node("extract_intent", RunnableLambda(extract_intent))
+graph.add_node("search_similar_docs", RunnableLambda(search_similar_docs))
+graph.add_node("run_inference", RunnableLambda(run_inference))
+graph.add_node("finalize", RunnableLambda(finalize))
 
-    graph = StateGraph(state_schema=frozenset({
-        "client_id": {"type": "string"},
-        "query": {"type": "string"},
-        "extracted_intent": {"type": "string"},
-        "kg_context": {"type": "string"},
-        "context": {"type": "string"},
-        "raw_response": {"type": "string"}
-    }))
+graph.set_entry_point("load_prompts")
+graph.add_edge("load_prompts", "extract_intent")
+graph.add_edge("extract_intent", "search_similar_docs")
+graph.add_edge("search_similar_docs", "run_inference")
+graph.add_edge("run_inference", "finalize")
 
-    for node in config["nodes"]:
-        graph.add_node(node["id"], RunnableLambda(STEP_FUNCTIONS[node["function"]]))
+inference_chain = graph.compile()
 
-    graph.set_entry_point(config["entry_point"])
-
-    for edge in config["edges"]:
-        graph.add_edge(edge["from"], edge["to"])
-
-    return graph.compile()
-
-
-# ------------------ Entry Function ------------------
-inference_chain = load_workflow_from_yaml("./app/services/agentic_workflow_config.yaml")
-
+# Wrapper function
 def generate_inference(client_id: str, query: str) -> Dict:
     return inference_chain.invoke({"client_id": client_id, "query": query})

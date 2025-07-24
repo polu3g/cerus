@@ -1,0 +1,36 @@
+entry_point: load_prompts
+
+nodes:
+  - id: load_prompts
+    function: load_prompts
+
+  - id: extract_intent
+    function: extract_intent
+
+  - id: kg_search_agent
+    function: kg_search_agent
+
+  - id: search_similar_docs
+    function: search_similar_docs
+
+  - id: run_inference
+    function: run_inference
+
+  - id: finalize
+    function: finalize
+
+edges:
+  - from: load_prompts
+    to: extract_intent
+
+  - from: extract_intent
+    to: kg_search_agent
+
+  - from: kg_search_agent
+    to: search_similar_docs
+
+  - from: search_similar_docs
+    to: run_inference
+
+  - from: run_inference
+    to: finalize
